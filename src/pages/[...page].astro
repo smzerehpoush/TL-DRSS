@@ -1,0 +1,27 @@
+---
+import Base from "../layouts/Base.astro";
+import PostCard from "../components/PostCard.astro";
+import { posts } from "../lib/data.js";
+import { url } from "../lib/url.js";
+
+export async function getStaticPaths({ paginate }) {
+  const { posts } = await import("../lib/data.js");
+  return paginate(posts, { pageSize: 30 });
+}
+
+const { page } = Astro.props;
+---
+<Base>
+  <h1>Latest engineering posts</h1>
+  <p class="page-intro">
+    From {`${new Set(posts.map((p) => p.source_slug)).size}`} company engineering blogs, summarized and categorized.
+  </p>
+
+  {page.data.length === 0 && <p class="empty">No posts yet — the first pipeline run will fill this page.</p>}
+  {page.data.map((post) => <PostCard post={post} />)}
+
+  <nav class="pagination">
+    <span>{page.url.prev && <a href={url(page.url.prev)}>&larr; Newer</a>}</span>
+    <span>{page.url.next && <a href={url(page.url.next)}>Older &rarr;</a>}</span>
+  </nav>
+</Base>

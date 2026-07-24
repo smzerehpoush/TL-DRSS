@@ -1,0 +1,17 @@
+---
+import { url } from "../lib/url.js";
+const { post } = Astro.props;
+const date = post.published_at
+  ? new Date(post.published_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+  : null;
+---
+<article class="post-card">
+  <h2><a href={post.url} target="_blank" rel="noopener">{post.title}</a></h2>
+  <p class="post-meta">
+    <a href={url(`/source/${post.source_slug}/`)}>{post.source_name}</a>{date && ` · ${date}`}
+  </p>
+  <p class="post-summary">{post.summary}</p>
+  <div class="chips">
+    {post.categories.map((c) => <a class="chip" href={url(`/category/${c.slug}/`)}>{c.name}</a>)}
+  </div>
+</article>

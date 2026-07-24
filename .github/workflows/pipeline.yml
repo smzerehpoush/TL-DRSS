@@ -1,0 +1,79 @@
+name: Ingest, enrich & deploy
+
+on:
+  schedule:
+    - cron: "17 */6 * * *" # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Ingest feeds
+        run: npm run ingest
+
+      - name: Enrich (classify + summarize)
+        run: npm run enrich
+        env:
+          # Claude is used when ANTHROPIC_API_KEY is set; otherwise Gemini.
+          # To switch providers, add/remove the corresponding secret.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-opus-4-8' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}
+          ENRICH_LIMIT: ${{ vars.ENRICH_LIMIT || 60 }}
+
+      - name: Commit database
+        run: |
+          git config user.name "pipeline-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/posts.db
+          git diff --cached --quiet || git commit -m "data: pipeline run $(date -u +'%Y-%m-%d %H:%M')"
+          git push
+
+      - name: Compute Pages URLs
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [[ "$REPO" == "$OWNER.github.io" ]]; then
+            echo "BASE_PATH=/" >> "$GITHUB_ENV"
+          else
+            echo "BASE_PATH=/$REPO/" >> "$GITHUB_ENV"
+          fi
+          echo "SITE_URL=https://$OWNER.github.io" >> "$GITHUB_ENV"
+
+      - name: Build site
+        run: npm run build
+        env:
+          SITE_URL: ${{ env.SITE_URL }}
+          BASE_PATH: ${{ env.BASE_PATH }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

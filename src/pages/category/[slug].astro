@@ -1,0 +1,19 @@
+---
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { postsByCategory } from "../../lib/data.js";
+
+export async function getStaticPaths() {
+  const { taxonomy } = await import("../../lib/data.js");
+  return taxonomy.map((c) => ({ params: { slug: c.slug }, props: { category: c } }));
+}
+
+const { category } = Astro.props;
+const list = postsByCategory(category.slug);
+---
+<Base title={`${category.name} · Tech Blogs`}>
+  <h1>{category.name}</h1>
+  <p class="page-intro">{category.description}</p>
+  {list.length === 0 && <p class="empty">Nothing here yet.</p>}
+  {list.map((post) => <PostCard post={post} />)}
+</Base>

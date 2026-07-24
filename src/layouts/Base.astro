@@ -1,0 +1,111 @@
+---
+import { url } from "../lib/url.js";
+const { title = "Tech Blogs", description = "Engineering blog posts from top tech companies, summarized and categorized." } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href={url("/")} class="logo">Tech Blogs</a>
+        <nav>
+          <a href={url("/")}>Latest</a>
+          <a href={url("/categories/")}>Categories</a>
+          <a href={url("/sources/")}>Sources</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      <slot />
+    </main>
+    <footer class="container">
+      <p>
+        Summaries are written by an LLM in this site's own words; every post links to the
+        original article, which remains the canonical source.
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #f7f6f3;
+    --card: #ffffff;
+    --text: #1c1c1a;
+    --muted: #6b6a64;
+    --accent: #0f5c4e;
+    --accent-soft: #e2efe9;
+    --border: #e4e2dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181a;
+      --card: #1e2124;
+      --text: #e8e6e1;
+      --muted: #9a988f;
+      --accent: #6fc7ae;
+      --accent-soft: #21332d;
+      --border: #2c2f33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 0 1.25rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .site-header { border-bottom: 1px solid var(--border); background: var(--card); }
+  .site-header .container {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding-top: 1rem; padding-bottom: 1rem;
+  }
+  .logo { font-weight: 700; font-size: 1.2rem; color: var(--text); }
+  .site-header nav { display: flex; gap: 1.1rem; }
+
+  main { padding: 2rem 1.25rem 3rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.35rem; }
+  .page-intro { color: var(--muted); margin: 0 0 1.75rem; }
+
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .post-card h2 { font-size: 1.08rem; margin: 0 0 0.3rem; line-height: 1.4; }
+  .post-card h2 a { color: var(--text); }
+  .post-meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.6rem; }
+  .post-meta a { color: var(--muted); font-weight: 600; }
+  .post-summary { margin: 0 0 0.75rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    display: inline-block; font-size: 0.78rem; padding: 0.15rem 0.6rem;
+    background: var(--accent-soft); color: var(--accent);
+    border-radius: 999px; font-weight: 600;
+  }
+  .chip:hover { text-decoration: none; filter: brightness(0.95); }
+
+  .index-list { list-style: none; padding: 0; margin: 0; }
+  .index-list li {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+  }
+  .index-list .count { color: var(--muted); font-size: 0.85rem; }
+
+  .pagination { display: flex; justify-content: space-between; margin-top: 2rem; }
+  footer { color: var(--muted); font-size: 0.82rem; padding-bottom: 2.5rem; }
+  .empty { color: var(--muted); }
+</style>

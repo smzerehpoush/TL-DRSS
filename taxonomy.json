@@ -1,0 +1,15 @@
+[
+  { "slug": "distributed-systems", "name": "Distributed Systems", "description": "Consensus, replication, queues, event streaming, coordination" },
+  { "slug": "databases-storage", "name": "Databases & Storage", "description": "SQL/NoSQL, caching, storage engines, data modeling" },
+  { "slug": "backend", "name": "Backend Engineering", "description": "Services, APIs, languages, frameworks, architecture of server-side systems" },
+  { "slug": "infrastructure-cloud", "name": "Infrastructure & Cloud", "description": "Kubernetes, platform engineering, compute, deployments" },
+  { "slug": "reliability-observability", "name": "Reliability & Observability", "description": "SRE, incidents, monitoring, postmortems, on-call" },
+  { "slug": "networking", "name": "Networking", "description": "Protocols, CDNs, load balancing, edge" },
+  { "slug": "performance", "name": "Performance", "description": "Profiling, optimization, scaling war stories" },
+  { "slug": "security", "name": "Security", "description": "Application security, infrastructure security, privacy engineering" },
+  { "slug": "data-engineering", "name": "Data Engineering", "description": "Pipelines, warehouses, analytics infrastructure" },
+  { "slug": "ml-ai", "name": "Machine Learning & AI", "description": "ML systems, LLMs, recommendations, model serving" },
+  { "slug": "frontend-web", "name": "Frontend & Web", "description": "Browsers, web frameworks, web performance, design systems" },
+  { "slug": "mobile", "name": "Mobile", "description": "iOS, Android, cross-platform apps" },
+  { "slug": "engineering-culture", "name": "Engineering Culture", "description": "Process, hiring, teams, how-we-work" }
+]

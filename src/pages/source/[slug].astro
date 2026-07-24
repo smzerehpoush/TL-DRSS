@@ -1,0 +1,19 @@
+---
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { postsBySource } from "../../lib/data.js";
+
+export async function getStaticPaths() {
+  const { sources } = await import("../../lib/data.js");
+  return sources.map((s) => ({ params: { slug: s.slug }, props: { source: s } }));
+}
+
+const { source } = Astro.props;
+const list = postsBySource(source.slug);
+---
+<Base title={`${source.name} · Tech Blogs`}>
+  <h1>{source.name}</h1>
+  <p class="page-intro">Engineering posts from {source.name}.</p>
+  {list.length === 0 && <p class="empty">Nothing here yet.</p>}
+  {list.map((post) => <PostCard post={post} />)}
+</Base>

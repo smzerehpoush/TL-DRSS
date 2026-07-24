@@ -1,0 +1,26 @@
+{
+  "name": "tech-blogs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "ingest": "node scripts/ingest.mjs",
+    "enrich": "node scripts/enrich.mjs",
+    "reclassify": "node scripts/reclassify.mjs",
+    "pipeline": "npm run ingest && npm run enrich",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "@mozilla/readability": "^0.6.0",
+    "astro": "^5.0.0",
+    "better-sqlite3": "^12.0.0",
+    "jsdom": "^26.0.0",
+    "rss-parser": "^3.13.0"
+  }
+}
