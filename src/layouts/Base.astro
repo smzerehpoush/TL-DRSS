@@ -1,6 +1,6 @@
 ---
 import { url } from "../lib/url.js";
-const { title = "Tech Blogs", description = "Engineering blog posts from top tech companies, summarized and categorized." } = Astro.props;
+const { title = "TL;DRSS", description = "Engineering blogs from top tech companies — summarized and categorized. We read the feeds so you don't have to." } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -14,7 +14,7 @@ const { title = "Tech Blogs", description = "Engineering blog posts from top tec
   <body>
     <header class="site-header">
       <div class="container">
-        <a href={url("/")} class="logo">Tech Blogs</a>
+        <a href={url("/")} class="logo">TL;DRSS</a>
         <nav>
           <a href={url("/")}>Latest</a>
           <a href={url("/categories/")}>Categories</a>

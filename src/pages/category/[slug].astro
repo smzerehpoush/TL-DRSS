@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 const { category } = Astro.props;
 const list = postsByCategory(category.slug);
 ---
-<Base title={`${category.name} · Tech Blogs`}>
+<Base title={`${category.name} · TL;DRSS`}>
   <h1>{category.name}</h1>
   <p class="page-intro">{category.description}</p>
   {list.length === 0 && <p class="empty">Nothing here yet.</p>}

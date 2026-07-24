@@ -1,4 +1,4 @@
-# Tech Blogs
+# TL;DRSS
 
 A public, read-only website that aggregates engineering blog posts from top tech companies via RSS/Atom feeds and organizes them by category. All engineering topics are treated equally; no topic is privileged.
 

@@ -7,7 +7,7 @@ const rows = taxonomy
   .map((c) => ({ ...c, count: postsByCategory(c.slug).length }))
   .sort((a, b) => b.count - a.count);
 ---
-<Base title="Categories · Tech Blogs">
+<Base title="Categories · TL;DRSS">
   <h1>Categories</h1>
   <p class="page-intro">One shared vocabulary across every blog.</p>
   <ul class="index-list">

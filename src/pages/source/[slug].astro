@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 const { source } = Astro.props;
 const list = postsBySource(source.slug);
 ---
-<Base title={`${source.name} · Tech Blogs`}>
+<Base title={`${source.name} · TL;DRSS`}>
   <h1>{source.name}</h1>
   <p class="page-intro">Engineering posts from {source.name}.</p>
   {list.length === 0 && <p class="empty">Nothing here yet.</p>}

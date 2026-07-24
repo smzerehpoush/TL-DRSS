@@ -1,4 +1,4 @@
-# Tech Blogs
+# TL;DRSS
 
 A public, read-only website that aggregates engineering blog posts from ~40 hand-curated top tech companies, categorizes them with a fixed taxonomy, and shows an LLM-written summary for each post with a link to the original. See `CONTEXT.md` for the domain vocabulary and `docs/adr/` for key decisions.
 

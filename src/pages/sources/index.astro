@@ -7,7 +7,7 @@ const rows = sources
   .map((s) => ({ ...s, count: postsBySource(s.slug).length }))
   .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 ---
-<Base title="Sources · Tech Blogs">
+<Base title="Sources · TL;DRSS">
   <h1>Sources</h1>
   <p class="page-intro">Hand-picked engineering blogs from top tech companies.</p>
   <ul class="index-list">
