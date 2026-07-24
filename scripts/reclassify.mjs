@@ -6,7 +6,8 @@ import { openDb } from "./lib/db.mjs";
 
 const db = openDb();
 const [flag, value] = process.argv.slice(2);
-const reset = "UPDATE posts SET categories = NULL, summary = NULL, model = NULL, enriched_at = NULL, fetch_attempts = 0";
+const reset =
+  "UPDATE posts SET categories = NULL, summary = NULL, model = NULL, enriched_at = NULL, fetch_attempts = 0, skipped = 0";
 
 let changes;
 if (flag === "--all") {

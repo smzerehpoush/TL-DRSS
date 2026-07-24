@@ -36,7 +36,7 @@ const db = openDb();
 const pending = db
   .prepare(
     `SELECT id, source_slug, title, url, fetch_attempts FROM posts
-     WHERE summary IS NULL ORDER BY published_at DESC LIMIT ?`
+     WHERE summary IS NULL AND skipped = 0 ORDER BY published_at DESC LIMIT ?`
   )
   .all(LIMIT);
 const save = db.prepare(
@@ -175,6 +175,7 @@ for (const post of pending) {
   }
 }
 
-const remaining = db.prepare("SELECT COUNT(*) AS n FROM posts WHERE summary IS NULL").get().n;
-console.log(`\nenrich done: ${done} posts enriched, ${remaining} still pending`);
+const remaining = db.prepare("SELECT COUNT(*) AS n FROM posts WHERE summary IS NULL AND skipped = 0").get().n;
+const parked = db.prepare("SELECT COUNT(*) AS n FROM posts WHERE summary IS NULL AND skipped = 1").get().n;
+console.log(`\nenrich done: ${done} posts enriched, ${remaining} still pending${parked ? `, ${parked} parked (scripts/skip-backlog.mjs --restore)` : ""}`);
 db.close();
