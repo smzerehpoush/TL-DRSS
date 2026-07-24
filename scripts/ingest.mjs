@@ -38,12 +38,24 @@ function canonicalUrl(raw) {
   }
 }
 
+// rss-parser's own timeout does not cover every connection phase, so a
+// misbehaving server can hang the whole run — enforce a hard cap per feed.
+const FEED_TIMEOUT_MS = Number(process.env.FEED_TIMEOUT_MS ?? 60_000);
+
+function withTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out after ${ms / 1000}s`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 let totalNew = 0;
 const failures = [];
 
-for (const source of sources) {
+async function processSource(source) {
   try {
-    const feed = await parser.parseURL(source.feed_url);
+    const feed = await withTimeout(parser.parseURL(source.feed_url), FEED_TIMEOUT_MS);
     let added = 0;
     const exclude = source.exclude ? new RegExp(source.exclude) : null;
     const items = (feed.items ?? [])
@@ -73,7 +85,10 @@ for (const source of sources) {
   }
 }
 
-const pending = db.prepare("SELECT COUNT(*) AS n FROM posts WHERE summary IS NULL").get().n;
+await Promise.all(sources.map(processSource));
+
+const pending = db.prepare("SELECT COUNT(*) AS n FROM posts WHERE summary IS NULL AND skipped = 0").get().n;
 console.log(`\ningest done: ${totalNew} new posts, ${pending} awaiting enrichment`);
 if (failures.length) console.log(`failed feeds: ${failures.join(", ")}`);
 db.close();
+process.exit(failures.length === sources.length ? 1 : 0); // hung sockets must not keep the process alive
