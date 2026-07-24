@@ -144,9 +144,19 @@ const isRateLimit = (err) =>
 const sources = JSON.parse(readFileSync(new URL("../sources.json", import.meta.url), "utf8"));
 const sourceNames = Object.fromEntries(sources.map((s) => [s.slug, s.name]));
 
+// Gemini's free tier has a tight per-minute limit that resets quickly — wait
+// it out instead of ending the run. Only give up after several consecutive
+// waits do nothing (i.e. the daily quota is exhausted).
+const RATE_LIMIT_WAIT_MS = 65_000;
+const MAX_RATE_LIMIT_WAITS = Number(process.env.MAX_RATE_LIMIT_WAITS ?? 8);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 console.log(`enriching with ${PROVIDER} (${MODEL}), up to ${LIMIT} posts`);
 let done = 0;
+let rateWaits = 0;
+let quotaExhausted = false;
 for (const post of pending) {
+  if (quotaExhausted) break;
   post.sourceName = sourceNames[post.source_slug] ?? post.source_slug;
 
   let articleText = null;
@@ -161,17 +171,27 @@ for (const post of pending) {
     console.log(`title-only ${post.source_slug}/${post.title.slice(0, 50)} after ${MAX_FETCH_ATTEMPTS} failed fetches`);
   }
 
-  try {
-    const { categories, summary } = await classifyAndSummarize(post, articleText);
-    save.run(JSON.stringify(categories), summary, MODEL, new Date().toISOString(), post.id);
-    done += 1;
-    console.log(`ok    ${post.source_slug}: ${post.title.slice(0, 60)} → [${categories.join(", ")}]`);
-  } catch (err) {
-    if (isRateLimit(err)) {
-      console.log("Rate limited — stopping this run; remaining posts continue next run.");
-      break;
+  while (true) {
+    try {
+      const { categories, summary } = await classifyAndSummarize(post, articleText);
+      save.run(JSON.stringify(categories), summary, MODEL, new Date().toISOString(), post.id);
+      done += 1;
+      rateWaits = 0;
+      console.log(`ok    ${post.source_slug}: ${post.title.slice(0, 60)} → [${categories.join(", ")}]`);
+    } catch (err) {
+      if (isRateLimit(err)) {
+        if (++rateWaits > MAX_RATE_LIMIT_WAITS) {
+          console.log("Rate limit not clearing (daily quota likely exhausted) — stopping; remaining posts continue next run.");
+          quotaExhausted = true;
+          break;
+        }
+        console.log(`rate limited — waiting ${RATE_LIMIT_WAIT_MS / 1000}s (${rateWaits}/${MAX_RATE_LIMIT_WAITS})`);
+        await sleep(RATE_LIMIT_WAIT_MS);
+        continue; // retry the same post
+      }
+      console.error(`FAIL  ${post.source_slug}/${post.title.slice(0, 50)}: ${err.message}`);
     }
-    console.error(`FAIL  ${post.source_slug}/${post.title.slice(0, 50)}: ${err.message}`);
+    break;
   }
 }
 
