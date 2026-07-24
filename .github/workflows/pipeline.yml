@@ -77,3 +77,21 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      # second mirror: mahdiyar.me/tldrss (separate build — different base path)
+      - name: Build for mahdiyar.me
+        run: npm run build
+        env:
+          SITE_URL: https://mahdiyar.me
+          BASE_PATH: /tldrss/
+
+      - name: Deploy to mahdiyar.me/tldrss
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            dist/ ubuntu@37.32.27.201:/srv/tldrss/

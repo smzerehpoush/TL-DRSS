@@ -8,14 +8,22 @@ const rows = taxonomy
   .sort((a, b) => b.count - a.count);
 ---
 <Base title="Categories · TL;DRSS">
-  <h1>Categories</h1>
-  <p class="page-intro">One shared vocabulary across every blog.</p>
-  <ul class="index-list">
-    {rows.map((c) => (
-      <li>
-        <a href={url(`/category/${c.slug}/`)}>{c.name}</a>
-        <span class="count">{c.count} posts</span>
-      </li>
-    ))}
-  </ul>
+  <div class="page-head">
+    <p class="eyebrow"><span class="dot"></span> taxonomy</p>
+    <h1>Categories</h1>
+    <p class="page-intro">One shared vocabulary imposed on every blog — thirteen fixed categories, no tag soup.</p>
+  </div>
+  {rows.map((c, i) => (
+    <div class="cap-row">
+      <span class="cap-row__idx">{String(i + 1).padStart(2, "0")}</span>
+      <div>
+        <h2 class="cap-row__title"><a href={url(`/category/${c.slug}/`)}>{c.name}</a></h2>
+        <p class="cap-row__desc">{c.description}</p>
+      </div>
+      <div class="cap-row__stat">
+        <div class="cap-row__num">{c.count}</div>
+        <div class="cap-row__slabel">posts</div>
+      </div>
+    </div>
+  ))}
 </Base>

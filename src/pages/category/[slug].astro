@@ -12,8 +12,11 @@ const { category } = Astro.props;
 const list = postsByCategory(category.slug);
 ---
 <Base title={`${category.name} · TL;DRSS`}>
-  <h1>{category.name}</h1>
-  <p class="page-intro">{category.description}</p>
+  <div class="page-head">
+    <p class="eyebrow"><span class="dot"></span> category · {list.length} posts</p>
+    <h1>{category.name}</h1>
+    <p class="page-intro">{category.description}</p>
+  </div>
   {list.length === 0 && <p class="empty">Nothing here yet.</p>}
-  {list.map((post) => <PostCard post={post} />)}
+  {list.map((post, i) => <PostCard post={post} index={i + 1} />)}
 </Base>

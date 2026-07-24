@@ -1,17 +1,26 @@
 ---
 import { url } from "../lib/url.js";
-const { post } = Astro.props;
+
+const { post, index } = Astro.props;
 const date = post.published_at
   ? new Date(post.published_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
   : null;
+const idx = String(index).padStart(2, "0");
 ---
-<article class="post-card">
-  <h2><a href={post.url} target="_blank" rel="noopener">{post.title}</a></h2>
-  <p class="post-meta">
-    <a href={url(`/source/${post.source_slug}/`)}>{post.source_name}</a>{date && ` · ${date}`}
-  </p>
-  <p class="post-summary">{post.summary}</p>
-  <div class="chips">
-    {post.categories.map((c) => <a class="chip" href={url(`/category/${c.slug}/`)}>{c.name}</a>)}
+<article class="row" data-cats={post.categories.map((c) => c.slug).join(" ")}>
+  <span class="row__idx" aria-hidden="true">{idx}</span>
+  <div>
+    <p class="row__cat">// {post.categories.map((c) => c.name).join(" · ")}</p>
+    <h2 class="row__title">
+      <a href={post.url} target="_blank" rel="noopener">{post.title} <span class="arw">↗</span></a>
+    </h2>
+    <p class="row__desc">{post.summary}</p>
+    <div class="row__tags">
+      {post.categories.map((c) => <a href={url(`/category/${c.slug}/`)}>{c.name}</a>)}
+    </div>
+  </div>
+  <div class="row__side">
+    <a class="row__src" href={url(`/source/${post.source_slug}/`)}>{post.source_name}</a>
+    {date && <span class="row__date">{date}</span>}
   </div>
 </article>

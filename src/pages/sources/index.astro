@@ -8,14 +8,17 @@ const rows = sources
   .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 ---
 <Base title="Sources · TL;DRSS">
-  <h1>Sources</h1>
-  <p class="page-intro">Hand-picked engineering blogs from top tech companies.</p>
-  <ul class="index-list">
+  <div class="page-head">
+    <p class="eyebrow"><span class="dot"></span> the roster</p>
+    <h1>Sources</h1>
+    <p class="page-intro">Hand-picked engineering blogs from top tech companies. A blog without a working feed doesn't make the list.</p>
+  </div>
+  <div class="stat-grid">
     {rows.map((s) => (
-      <li>
-        <a href={url(`/source/${s.slug}/`)}>{s.name}</a>
-        <span class="count">{s.count} posts</span>
-      </li>
+      <a class="stat-cell" href={url(`/source/${s.slug}/`)}>
+        <div class="stat-cell__name">{s.name}</div>
+        <div class="stat-cell__count">{s.count} posts</div>
+      </a>
     ))}
-  </ul>
+  </div>
 </Base>

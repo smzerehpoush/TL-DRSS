@@ -14,6 +14,23 @@ export const sources = JSON.parse(readFileSync(join(root, "sources.json"), "utf8
 const sourceName = Object.fromEntries(sources.map((s) => [s.slug, s.name]));
 const categoryName = Object.fromEntries(taxonomy.map((c) => [c.slug, c.name]));
 
+// One hue per Category — used for chips, card rules, and category pages.
+export const categoryColors = {
+  "distributed-systems": "#5b8def",
+  "databases-storage": "#d9a03f",
+  backend: "#2ebd6b",
+  "infrastructure-cloud": "#38bdf8",
+  "reliability-observability": "#f26d5f",
+  networking: "#2cc5b2",
+  performance: "#f59e0b",
+  security: "#e5484d",
+  "data-engineering": "#9b8afb",
+  "ml-ai": "#d66ef0",
+  "frontend-web": "#ef7bae",
+  mobile: "#a3b520",
+  "engineering-culture": "#8a93a6",
+};
+
 function loadPosts() {
   if (!existsSync(DB_PATH)) return [];
   const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });

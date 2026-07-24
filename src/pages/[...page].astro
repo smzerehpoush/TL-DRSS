@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/PostCard.astro";
-import { posts } from "../lib/data.js";
+import { posts, sources, taxonomy } from "../lib/data.js";
 import { url } from "../lib/url.js";
 
 export async function getStaticPaths({ paginate }) {
@@ -10,18 +10,77 @@ export async function getStaticPaths({ paginate }) {
 }
 
 const { page } = Astro.props;
+const isFirstPage = page.currentPage === 1;
+const sourceCount = new Set(posts.map((p) => p.source_slug)).size;
+const marqueeNames = sources.map((s) => s.name);
+const offset = page.start;
 ---
 <Base>
-  <h1>Latest engineering posts</h1>
-  <p class="page-intro">
-    From {`${new Set(posts.map((p) => p.source_slug)).size}`} company engineering blogs, summarized and categorized.
-  </p>
+  {isFirstPage && (
+    <>
+      <section class="hero">
+        <p class="eyebrow"><span class="dot"></span> {posts.length} posts · {sourceCount || sources.length} sources · {taxonomy.length} categories · every 6h</p>
+        <h1>
+          <span class="ln"><span>We read</span></span>
+          <span class="ln"><span>the feeds so</span></span>
+          <span class="ln"><span><em class="hl">you don't have to.</em></span></span>
+        </h1>
+        <p class="hero__sub">
+          Engineering blogs from the companies that run the internet — summarized in
+          plain language, categorized with one shared vocabulary, refreshed every six hours.
+        </p>
+      </section>
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          {[0, 1].map(() => (
+            <span>{marqueeNames.map((n) => <>{n}<span class="mq-star">✳</span></>)}</span>
+          ))}
+        </div>
+      </div>
+    </>
+  )}
 
-  {page.data.length === 0 && <p class="empty">No posts yet — the first pipeline run will fill this page.</p>}
-  {page.data.map((post) => <PostCard post={post} />)}
+  <div class="sh">
+    <p class="sh__label"><span class="sh__num">{String(page.currentPage).padStart(2, "0")}</span> latest posts</p>
+    <div class="sh__line"></div>
+  </div>
 
-  <nav class="pagination">
-    <span>{page.url.prev && <a href={url(page.url.prev)}>&larr; Newer</a>}</span>
-    <span>{page.url.next && <a href={url(page.url.next)}>Older &rarr;</a>}</span>
+  <div class="filterbar" role="group" aria-label="Filter by category">
+    <button class="filterbar__btn is-active" data-cat="all">All</button>
+    {taxonomy.map((c) => (
+      <button class="filterbar__btn" data-cat={c.slug}>{c.name}</button>
+    ))}
+  </div>
+
+  {page.data.length === 0 && <p class="empty">No posts yet — the first pipeline run fills this page.</p>}
+  {page.data.map((post, i) => <PostCard post={post} index={offset + i + 1} />)}
+  <p class="empty filter-empty" hidden>No posts in this category on this page — try the category page instead.</p>
+
+  <script is:inline>
+    (function () {
+      var bar = document.querySelector(".filterbar");
+      if (!bar) return;
+      var rows = Array.prototype.slice.call(document.querySelectorAll(".row[data-cats]"));
+      var emptyMsg = document.querySelector(".filter-empty");
+      bar.addEventListener("click", function (e) {
+        var btn = e.target.closest(".filterbar__btn");
+        if (!btn) return;
+        bar.querySelectorAll(".filterbar__btn").forEach(function (b) { b.classList.remove("is-active"); });
+        btn.classList.add("is-active");
+        var cat = btn.getAttribute("data-cat");
+        var visible = 0;
+        rows.forEach(function (row) {
+          var show = cat === "all" || row.getAttribute("data-cats").split(" ").indexOf(cat) !== -1;
+          row.style.display = show ? "" : "none";
+          if (show) visible++;
+        });
+        if (emptyMsg) emptyMsg.hidden = visible > 0;
+      });
+    })();
+  </script>
+
+  <nav class="pagination" aria-label="Pagination">
+    <span>{page.url.prev && <a href={url(page.url.prev)}>&larr; newer</a>}</span>
+    <span>{page.url.next && <a href={url(page.url.next)}>older &rarr;</a>}</span>
   </nav>
 </Base>
