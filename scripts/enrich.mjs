@@ -17,10 +17,21 @@ if (!PROVIDER) {
   console.log("No LLM key set (ANTHROPIC_API_KEY or GEMINI_API_KEY) — skipping enrichment.");
   process.exit(0);
 }
-const MODEL =
+// Gemini free-tier quotas are per model, so rotate through the family when one
+// model's daily quota runs dry. Order: newest/best first.
+const GEMINI_MODELS = (
+  process.env.GEMINI_MODELS ??
+  process.env.GEMINI_MODEL ??
+  "gemini-3.6-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.0-flash"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+let geminiIdx = 0;
+const currentModel = () =>
   PROVIDER === "anthropic"
     ? process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8"
-    : process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+    : GEMINI_MODELS[geminiIdx];
 
 const LIMIT = Number(process.env.ENRICH_LIMIT ?? 60);
 const MAX_FETCH_ATTEMPTS = 5;
@@ -90,7 +101,7 @@ const anthropic = PROVIDER === "anthropic" ? new Anthropic() : null;
 
 async function callAnthropic(prompt) {
   const msg = await anthropic.messages.create({
-    model: MODEL,
+    model: currentModel(),
     max_tokens: 2048,
     output_config: { format: { type: "json_schema", schema: resultJsonSchema } },
     messages: [{ role: "user", content: prompt }],
@@ -102,7 +113,7 @@ async function callAnthropic(prompt) {
 
 async function callGemini(prompt) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${currentModel()}:generateContent`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
@@ -151,7 +162,7 @@ const RATE_LIMIT_WAIT_MS = 65_000;
 const MAX_RATE_LIMIT_WAITS = Number(process.env.MAX_RATE_LIMIT_WAITS ?? 8);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-console.log(`enriching with ${PROVIDER} (${MODEL}), up to ${LIMIT} posts`);
+console.log(`enriching with ${PROVIDER} (${currentModel()}), up to ${LIMIT} posts`);
 let done = 0;
 let rateWaits = 0;
 let quotaExhausted = false;
@@ -174,17 +185,27 @@ for (const post of pending) {
   while (true) {
     try {
       const { categories, summary } = await classifyAndSummarize(post, articleText);
-      save.run(JSON.stringify(categories), summary, MODEL, new Date().toISOString(), post.id);
+      save.run(JSON.stringify(categories), summary, currentModel(), new Date().toISOString(), post.id);
       done += 1;
       rateWaits = 0;
       console.log(`ok    ${post.source_slug}: ${post.title.slice(0, 60)} → [${categories.join(", ")}]`);
     } catch (err) {
-      if (isRateLimit(err)) {
-        if (++rateWaits > MAX_RATE_LIMIT_WAITS) {
-          console.log("Rate limit not clearing (daily quota likely exhausted) — stopping; remaining posts continue next run.");
-          quotaExhausted = true;
-          break;
+      const deadModel = PROVIDER === "gemini" && /Gemini HTTP 404/.test(err.message);
+      const quotaDry = isRateLimit(err) && rateWaits >= MAX_RATE_LIMIT_WAITS;
+      if (deadModel || quotaDry) {
+        // this model is unusable (missing, or daily quota gone) — rotate
+        if (PROVIDER === "gemini" && geminiIdx < GEMINI_MODELS.length - 1) {
+          console.log(`${currentModel()} ${deadModel ? "unavailable" : "daily quota exhausted"} — switching to ${GEMINI_MODELS[geminiIdx + 1]}`);
+          geminiIdx += 1;
+          rateWaits = 0;
+          continue; // retry the same post on the next model
         }
+        console.log("All models exhausted — stopping; remaining posts continue next run.");
+        quotaExhausted = true;
+        break;
+      }
+      if (isRateLimit(err)) {
+        rateWaits += 1;
         console.log(`rate limited — waiting ${RATE_LIMIT_WAIT_MS / 1000}s (${rateWaits}/${MAX_RATE_LIMIT_WAITS})`);
         await sleep(RATE_LIMIT_WAIT_MS);
         continue; // retry the same post

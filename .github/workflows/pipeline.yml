@@ -41,7 +41,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-opus-4-8' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}
+          GEMINI_MODELS: ${{ vars.GEMINI_MODELS }} # optional override; script has a rotation default
           ENRICH_LIMIT: ${{ vars.ENRICH_LIMIT || 60 }}
 
       - name: Commit database
@@ -50,7 +50,10 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/posts.db
           git diff --cached --quiet || git commit -m "data: pipeline run $(date -u +'%Y-%m-%d %H:%M')"
-          git push
+          # main may have moved during the run; rebase our db commit on top.
+          # On a posts.db conflict keep this run's version (-X theirs in rebase
+          # terms = the commit being replayed, i.e. ours).
+          git push || (git pull --rebase -X theirs && git push)
 
       - name: Compute Pages URLs
         run: |
