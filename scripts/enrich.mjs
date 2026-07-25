@@ -19,14 +19,19 @@ if (!PROVIDER) {
 }
 // Gemini free-tier quotas are per model, so rotate through the family when one
 // model's daily quota runs dry. Order: newest/best first.
+// `||` not `??`: CI passes unset repo variables through as empty strings.
 const GEMINI_MODELS = (
-  process.env.GEMINI_MODELS ??
-  process.env.GEMINI_MODEL ??
+  process.env.GEMINI_MODELS ||
+  process.env.GEMINI_MODEL ||
   "gemini-3.6-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.0-flash"
 )
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+if (PROVIDER === "gemini" && GEMINI_MODELS.length === 0) {
+  console.error("GEMINI_MODELS resolved to an empty list");
+  process.exit(1);
+}
 let geminiIdx = 0;
 const currentModel = () =>
   PROVIDER === "anthropic"
